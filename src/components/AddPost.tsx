@@ -10,7 +10,7 @@ import { addPost } from "@/lib/actions";
 
 const AddPost = () => {
   const { user, isLoaded } = useUser();
-  //const [desc, setDesc] = useState("");
+  const [desc, setDesc] = useState("");
   const [img, setImg] = useState<any>();
 
   if (!isLoaded) {
