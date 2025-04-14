@@ -1,21 +1,20 @@
-import prisma from "@/lib/client";
-import Image from "next/image";
+"use client";
+
 import CommentList from "./CommentList";
+import { Comment, User } from "@prisma/client";
 
-const Comments = async ({postId}:{postId:number}) => {
+type CommentWithUser = Comment & { user: User };
 
-  const comments = await prisma.comment.findMany({
-    where:{
-      postId,
-    },
-    include:{
-      user:true
-    }
-  })
+const Comments = ({
+  comments,
+  postId,
+}: {
+  comments: CommentWithUser[];
+  postId: number;
+}) => {
   return (
-    <div className="">
-      {/* WRITE */}
-      <CommentList comments={comments} postId={postId}/>
+    <div>
+      <CommentList comments={comments} postId={postId} />
     </div>
   );
 };

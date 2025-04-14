@@ -1,22 +1,50 @@
-import Image from "next/image";
-import Comments from "./Comments";
-import { Post as PostType, User } from "@prisma/client";
-import PostInteraction from "./PostInteraction";
-import { Suspense } from "react";
-import PostInfo from "./PostInfo";
-import { auth } from "@clerk/nextjs/server";
+"use client";
 
-type FeedPostType = PostType & { user: User } & {
-  likes: [{ userId: string }];
-} & {
+import Image from "next/image";
+import { useState, useEffect, Suspense } from "react";
+import PostInteraction from "./PostInteraction";
+import PostInfo from "./PostInfo";
+import Comments from "./Comments";
+import { Post as PostType, User, Comment } from "@prisma/client";
+
+type CommentWithUser = Comment & { user: User };
+
+type FeedPostType = PostType & {
+  user: User;
+  likes: { userId: string }[];
   _count: { comments: number };
 };
 
-const Post = async ({ post }: { post: FeedPostType }) => {
-  const { userId } = await auth();
+const Post = ({
+  post,
+  userId,
+}: {
+  post: FeedPostType;
+  userId: string | null;
+}) => {
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<CommentWithUser[]>([]);
+  const [commentsLoaded, setCommentsLoaded] = useState(false);
+
+  const toggleComments = async () => {
+    setShowComments((prev) => !prev);
+
+    if (!commentsLoaded) {
+      try {
+        const res = await fetch(`/api/comments?postId=${post.id}`);
+        if (!res.ok) throw new Error("Failed to fetch comments");
+        const data: CommentWithUser[] = await res.json();
+        setComments(data);
+        setCommentsLoaded(true);
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
-      {/* USER */}
+      {/* USER INFO */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Image
@@ -28,13 +56,14 @@ const Post = async ({ post }: { post: FeedPostType }) => {
           />
           <span className="font-medium">
             {post.user.name && post.user.surname
-              ? post.user.name + " " + post.user.surname
+              ? `${post.user.name} ${post.user.surname}`
               : post.user.username}
           </span>
         </div>
         {userId === post.user.id && <PostInfo postId={post.id} />}
       </div>
-      {/* DESC */}
+
+      {/* POST CONTENT */}
       <div className="flex flex-col gap-4">
         {post.img && (
           <div className="w-full min-h-96 relative">
@@ -48,17 +77,19 @@ const Post = async ({ post }: { post: FeedPostType }) => {
         )}
         <p>{post.desc}</p>
       </div>
-      {/* INTERACTION */}
+
+      {/* POST INTERACTIONS */}
       <Suspense fallback="Loading...">
         <PostInteraction
           postId={post.id}
           likes={post.likes.map((like) => like.userId)}
           commentNumber={post._count.comments}
+          toggleComments={toggleComments} // ✅ Toggle comments when clicked
         />
       </Suspense>
-      <Suspense fallback="Loading...">
-        <Comments postId={post.id} />
-      </Suspense>
+
+      {/* COMMENTS SECTION */}
+      {showComments && <Comments comments={comments} postId={post.id} />}
     </div>
   );
 };
