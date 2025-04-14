@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+//import { auth } from "@clerk/nextjs/server";
 import { CldUploadWidget } from "next-cloudinary";
 import Image from "next/image";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import { addPost } from "@/lib/actions";
 
 const AddPost = () => {
   const { user, isLoaded } = useUser();
-  const [desc, setDesc] = useState("");
+  //const [desc, setDesc] = useState("");
   const [img, setImg] = useState<any>();
 
   if (!isLoaded) {
